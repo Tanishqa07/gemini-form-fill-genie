@@ -4,10 +4,46 @@ import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 
 // Initialize the Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create a conditional supabase client
+let supabase: SupabaseClient;
+
+try {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Supabase URL or Anon Key is missing. Please set the environment variables.');
+    // Create a mock client for development to prevent crashes
+    supabase = {
+      auth: {
+        getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+        signInWithPassword: () => Promise.resolve({ error: new Error('Supabase not configured') }),
+        signUp: () => Promise.resolve({ error: new Error('Supabase not configured') }),
+        signOut: () => Promise.resolve({ error: null }),
+      },
+      from: () => ({ select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }) }),
+      storage: { from: () => ({ upload: () => {}, getPublicUrl: () => {}, remove: () => {} }) },
+      functions: { invoke: () => Promise.resolve({ data: null, error: null }) },
+    } as unknown as SupabaseClient;
+  } else {
+    supabase = createClient(supabaseUrl, supabaseAnonKey);
+  }
+} catch (error) {
+  console.error('Failed to initialize Supabase client:', error);
+  // Create mock client as fallback
+  supabase = {
+    auth: {
+      getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+      getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+      signInWithPassword: () => Promise.resolve({ error: new Error('Supabase error') }),
+      signUp: () => Promise.resolve({ error: new Error('Supabase error') }),
+      signOut: () => Promise.resolve({ error: null }),
+    },
+  } as unknown as SupabaseClient;
+}
 
 interface SupabaseContextType {
   supabase: SupabaseClient;
@@ -16,6 +52,7 @@ interface SupabaseContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  isConfigured: boolean;
 }
 
 const SupabaseContext = createContext<SupabaseContextType | undefined>(undefined);
@@ -23,11 +60,17 @@ const SupabaseContext = createContext<SupabaseContextType | undefined>(undefined
 export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isConfigured] = useState<boolean>(!!supabaseUrl && !!supabaseAnonKey);
 
   // Check for existing session on mount
   useEffect(() => {
     const checkUser = async () => {
       try {
+        if (!isConfigured) {
+          setLoading(false);
+          return;
+        }
+        
         const { data } = await supabase.auth.getSession();
         if (data.session) {
           // Get user profile from Supabase
@@ -45,23 +88,31 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     checkUser();
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (session?.user) {
-          setUser(session.user);
-        } else {
-          setUser(null);
+    if (isConfigured) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (_event, session) => {
+          if (session?.user) {
+            setUser(session.user);
+          } else {
+            setUser(null);
+          }
+          setLoading(false);
         }
-        setLoading(false);
-      }
-    );
+      );
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+    return;
+  }, [isConfigured]);
 
   const signIn = async (email: string, password: string) => {
+    if (!isConfigured) {
+      toast.error('Supabase is not configured. Please set the environment variables.');
+      return;
+    }
+    
     try {
       setLoading(true);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -76,6 +127,11 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const signUp = async (name: string, email: string, password: string) => {
+    if (!isConfigured) {
+      toast.error('Supabase is not configured. Please set the environment variables.');
+      return;
+    }
+    
     try {
       setLoading(true);
       // Create the user in Supabase Auth
@@ -100,6 +156,11 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const signOut = async () => {
+    if (!isConfigured) {
+      setUser(null);
+      return;
+    }
+    
     try {
       setLoading(true);
       const { error } = await supabase.auth.signOut();
@@ -120,9 +181,17 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         loading,
         signIn,
         signUp,
-        signOut
+        signOut,
+        isConfigured
       }}
     >
+      {!isConfigured && (
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded">
+          <p className="font-bold">Warning</p>
+          <p>Supabase environment variables are not configured. Some features may not work correctly.</p>
+          <p className="text-sm mt-1">Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment.</p>
+        </div>
+      )}
       {children}
     </SupabaseContext.Provider>
   );

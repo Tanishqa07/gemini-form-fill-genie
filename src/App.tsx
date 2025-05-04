@@ -12,12 +12,22 @@ import { SupabaseProvider } from "./contexts/SupabaseContext";
 
 const queryClient = new QueryClient();
 
+// Check if Supabase environment variables are set
+const isSupabaseConfigured = 
+  import.meta.env.VITE_SUPABASE_URL && 
+  import.meta.env.VITE_SUPABASE_ANON_KEY;
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <SupabaseProvider>
+        {!isSupabaseConfigured && (
+          <div className="fixed top-0 left-0 right-0 bg-red-500 text-white p-2 text-center z-50">
+            Supabase environment variables missing. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.
+          </div>
+        )}
         <FormDataProvider>
           <BrowserRouter>
             <Routes>
