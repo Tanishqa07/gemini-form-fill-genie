@@ -12,10 +12,19 @@ import { SupabaseProvider } from "./contexts/SupabaseContext";
 
 const queryClient = new QueryClient();
 
+// Set Supabase environment variables
+if (!import.meta.env.VITE_SUPABASE_URL) {
+  window.VITE_SUPABASE_URL = "https://fszdehjytxsuqzfllroq.supabase.co";
+}
+
+if (!import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  window.VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzemRlaGp5dHhzdXF6Zmxscm9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNDY2NTQsImV4cCI6MjA2MTkyMjY1NH0.ynIl8x4ExJDmrePHeJwueRQ-M-uz2quWQn8yqFo2YQs";
+}
+
 // Check if Supabase environment variables are set
 const isSupabaseConfigured = 
-  import.meta.env.VITE_SUPABASE_URL && 
-  import.meta.env.VITE_SUPABASE_ANON_KEY;
+  window.VITE_SUPABASE_URL && 
+  window.VITE_SUPABASE_ANON_KEY;
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

@@ -4,8 +4,8 @@ import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 
 // Initialize the Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = window.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = window.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Create a conditional supabase client
 let supabase: SupabaseClient;
