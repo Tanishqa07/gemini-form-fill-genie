@@ -1,15 +1,16 @@
 
 import React from "react";
-import { useAuth } from "../contexts/AuthContext";
+import { useSupabase } from "../contexts/SupabaseContext";
 import { Button } from "./ui/button";
+import { Link } from "react-router-dom";
 
 const Header: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useSupabase();
 
   return (
     <header className="bg-primary text-white p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
-        <div className="flex items-center space-x-2">
+        <Link to="/" className="flex items-center space-x-2">
           <div className="bg-white rounded-md p-1">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -33,12 +34,12 @@ const Header: React.FC = () => {
             </svg>
           </div>
           <span className="font-bold text-lg">FormFillGenie</span>
-        </div>
+        </Link>
 
         {user ? (
           <div className="flex items-center space-x-4">
-            <span className="hidden md:inline">Welcome, {user.name}</span>
-            <Button variant="outline" size="sm" onClick={logout}>
+            <span className="hidden md:inline">Welcome, {user.user_metadata?.full_name || user.email}</span>
+            <Button variant="outline" size="sm" onClick={signOut}>
               Logout
             </Button>
           </div>

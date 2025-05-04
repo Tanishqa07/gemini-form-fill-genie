@@ -1,13 +1,21 @@
-import React from "react";
-import { useAuth } from "../contexts/AuthContext";
+
+import React, { useEffect } from "react";
+import { useSupabase } from "../contexts/SupabaseContext";
 import LoginForm from "../components/LoginForm";
-import Dashboard from "./Dashboard";
 import Header from "../components/Header";
+import { useNavigate } from "react-router-dom";
 
 const Index: React.FC = () => {
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useSupabase();
+  const navigate = useNavigate();
 
-  if (isLoading) {
+  useEffect(() => {
+    if (user && !loading) {
+      navigate('/dashboard');
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -18,12 +26,7 @@ const Index: React.FC = () => {
     );
   }
 
-  // If user is logged in, show dashboard
-  if (user) {
-    return <Dashboard />;
-  }
-
-  // Otherwise, show login page
+  // If user is not logged in, show login page
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />

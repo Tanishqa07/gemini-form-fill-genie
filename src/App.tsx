@@ -6,8 +6,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import { AuthProvider } from "./contexts/AuthContext";
 import { FormDataProvider } from "./contexts/FormDataContext";
+import Dashboard from "./pages/Dashboard";
+import { SupabaseProvider } from "./contexts/SupabaseContext";
 
 const queryClient = new QueryClient();
 
@@ -16,17 +17,18 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <AuthProvider>
+      <SupabaseProvider>
         <FormDataProvider>
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </FormDataProvider>
-      </AuthProvider>
+      </SupabaseProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

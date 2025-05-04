@@ -7,11 +7,11 @@ import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { toast } from "sonner";
-import { Separator } from "./ui/separator";
-import { Trash, Pencil, File } from "lucide-react";
+import { Trash, File, ExternalLink } from "lucide-react";
+import { Spinner } from "./Spinner";
 
 const DocumentUpload: React.FC = () => {
-  const { documents, addDocument, removeDocument } = useFormData();
+  const { documents, addDocument, removeDocument, isLoading } = useFormData();
   const [documentName, setDocumentName] = useState("");
   const [documentType, setDocumentType] = useState("");
   const [documentFile, setDocumentFile] = useState<File | null>(null);
@@ -26,10 +26,10 @@ const DocumentUpload: React.FC = () => {
     }
     
     try {
-      // Convert file to base64
+      // Convert file to base64 for processing
       const fileData = await fileToBase64(documentFile);
       
-      addDocument({
+      await addDocument({
         name: documentName,
         type: documentType,
         fileData,
@@ -111,7 +111,16 @@ const DocumentUpload: React.FC = () => {
               <p className="text-sm text-gray-500">Accepted formats: PDF, JPG, JPEG, PNG (max 5MB)</p>
             </div>
             
-            <Button type="submit" className="w-full">Upload Document</Button>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Spinner className="mr-2" />
+                  Uploading...
+                </>
+              ) : (
+                "Upload Document"
+              )}
+            </Button>
           </form>
         </CardContent>
       </Card>
@@ -121,7 +130,11 @@ const DocumentUpload: React.FC = () => {
           <CardTitle>Your Documents</CardTitle>
         </CardHeader>
         <CardContent>
-          {documents.length === 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Spinner />
+            </div>
+          ) : documents.length === 0 ? (
             <div className="text-center py-6 text-gray-500">
               No documents uploaded yet.
             </div>
@@ -143,16 +156,20 @@ const DocumentUpload: React.FC = () => {
                       variant="outline"
                       size="icon"
                       onClick={() => {
-                        // In a real app, this would open the document
-                        toast.info("Preview feature will be available in the full extension");
+                        if (doc.fileData.startsWith('http')) {
+                          window.open(doc.fileData, '_blank');
+                        } else {
+                          toast.info("Preview feature will be available in the full extension");
+                        }
                       }}
                     >
-                      <Pencil className="h-4 w-4" />
+                      <ExternalLink className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
                       size="icon"
                       onClick={() => removeDocument(doc.id)}
+                      disabled={isLoading}
                     >
                       <Trash className="h-4 w-4" />
                     </Button>

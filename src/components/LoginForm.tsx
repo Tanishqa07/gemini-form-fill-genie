@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
+import { useSupabase } from "../contexts/SupabaseContext";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
@@ -8,7 +8,7 @@ import { Label } from "./ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 const LoginForm: React.FC = () => {
-  const { login, register, isLoading } = useAuth();
+  const { signIn, signUp, loading } = useSupabase();
   const [activeTab, setActiveTab] = useState("login");
   
   // Login form state
@@ -23,7 +23,7 @@ const LoginForm: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(loginEmail, loginPassword);
+      await signIn(loginEmail, loginPassword);
     } catch (error) {
       console.error("Login error:", error);
     }
@@ -32,7 +32,7 @@ const LoginForm: React.FC = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await register(registerName, registerEmail, registerPassword);
+      await signUp(registerName, registerEmail, registerPassword);
     } catch (error) {
       console.error("Registration error:", error);
     }
@@ -79,8 +79,8 @@ const LoginForm: React.FC = () => {
               </div>
             </CardContent>
             <CardFooter>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Logging in..." : "Login"}
               </Button>
             </CardFooter>
           </form>
@@ -129,8 +129,8 @@ const LoginForm: React.FC = () => {
               </div>
             </CardContent>
             <CardFooter>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Registering..." : "Register"}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Registering..." : "Register"}
               </Button>
             </CardFooter>
           </form>
