@@ -22,8 +22,8 @@ const Dashboard: React.FC = () => {
         <div className="container mx-auto px-4 text-center text-sm text-gray-500">
           <p>FormFillGenie • Your AI-powered form assistant</p>
           <p className="text-xs mt-1">Powered by Gemini API</p>
-        </footer>
-      </div>
+        </div>
+      </footer>
     </div>
   );
 };
